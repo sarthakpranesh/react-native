@@ -176,21 +176,22 @@ public class HeadlessJsTaskContext {
    * @param taskId the unique id returned by {@link #startTask}.
    */
   public synchronized void finishTask(final int taskId) {
-    Assertions.assertCondition(
-        mActiveTasks.remove(taskId), "Tried to finish non-existent task with id " + taskId + ".");
-    Assertions.assertCondition(
-        mActiveTaskConfigs.remove(taskId) != null,
-        "Tried to remove non-existent task config with id " + taskId + ".");
-    removeTimeout(taskId);
-    UiThreadUtil.runOnUiThread(
-        new Runnable() {
-          @Override
-          public void run() {
-            for (HeadlessJsTaskEventListener listener : mHeadlessJsTaskEventListeners) {
-              listener.onHeadlessJsTaskFinish(taskId);
-            }
-          }
-        });
+    try {
+      if (mActiveTasks.remove(taskId) && mActiveTaskConfigs.remove(taskId) != null) {
+        removeTimeout(taskId);
+        UiThreadUtil.runOnUiThread(
+                new Runnable() {
+                  @Override
+                  public void run() {
+                    for (HeadlessJsTaskEventListener listener : mHeadlessJsTaskEventListeners) {
+                      listener.onHeadlessJsTaskFinish(taskId);
+                    }
+                  }
+                });
+      }
+    }catch(Exception error){
+      //
+    }
   }
 
   private void removeTimeout(int taskId) {
